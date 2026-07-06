@@ -51,6 +51,9 @@ body::before{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
 .product-table .price-cell{font-family:var(--sans);font-weight:700;color:var(--amber)}
 .product-table .rating-cell{color:var(--green)}
 .product-table .torque-cell{color:var(--hazard);font-weight:700}
+.product-table .link-cell{text-align:center}
+.product-table a{color:var(--cyan);text-decoration:none;font-size:0.7rem}
+.product-table a:hover{text-decoration:underline}
 .footer{border-top:1px solid var(--grid-line);padding:20px 32px;font-size:0.65rem;color:var(--dim);letter-spacing:0.1em;text-transform:uppercase}
 .footer a{color:var(--cyan);text-decoration:none}
 @media(max-width:768px){.chart-grid.cols-2{grid-template-columns:1fr}}
@@ -106,7 +109,19 @@ const DATA = {
     {sku:"843XJ",name:"Makita DTW285Z 18V LXT Brushless",brand:"Makita",price:179.99,rating:4.8,reviews:8},
     {sku:"246GE",name:"Milwaukee M18FHIWF12 FUEL 18V",brand:"Milwaukee",price:249.99,rating:5.0,reviews:7},
     {sku:"693XJ",name:"Makita TW1001DZ 18V LXT",brand:"Makita",price:219.99,rating:4.5,reviews:7}
-  ]
+  ],
+  product_urls: {
+    "145KJ":"/p/makita-dtw300z-18v-li-ion-lxt-brushless-cordless-impact-wrench-bare/145kj",
+    "870YM":"/p/erbauer-eri1097ipd-18v-li-ion-ext-brushless-cordless-impact-wrench-bare/870ym",
+    "934EH":"/p/dewalt-mclaren-f1-team-dcf99mp2t-gb-18v-2-x-5-0ah-li-ion-xr-brushless-cordless-impact-wrench/934eh",
+    "711GE":"/p/milwaukee-m18-fiw2f38-0x-fuel-18v-li-ion-redlithium-brushless-cordless-impact-wrench-bare/711ge",
+    "926YM":"/p/erbauer-eri1095ipd-18v-li-ion-ext-brushless-cordless-impact-wrench-bare/926ym",
+    "263EN":"/p/milwaukee-m18fhiw2f12-0-fuel-18v-li-ion-redlithium-brushless-cordless-impact-wrench-bare/263en",
+    "445GE":"/p/milwaukee-m18-onefhiwf12-502x-fuel-18v-2-x-5-0ah-li-ion-redlithium-brushless-cordless-one-key-impact-wrench/445ge",
+    "843XJ":"/p/makita-dtw1002z-18v-li-ion-lxt-brushless-cordless-impact-wrench-bare/843xj",
+    "246GE":"/p/milwaukee-m18-onefhiwf34-502x-fuel-18v-2-x-5-0ah-li-ion-redlithium-brushless-cordless-one-key-impact-wrench/246ge",
+    "693XJ":"/p/makita-dtw190z-18v-li-ion-lxt-cordless-impact-wrench-bare/693xj"
+  }
 };
 
 // ===== Status Bar =====
@@ -314,8 +329,10 @@ Plotly.newPlot('chart-review-dom',[{
 
 // ===== Product Table =====
 const table = document.getElementById('product-table');
-table.innerHTML = `<tr><th>#</th><th>SKU</th><th>Brand</th><th>Product Name</th><th>Price</th><th>Rating</th><th>Reviews</th></tr>` +
-  tr.map((d,i)=>`<tr>
+table.innerHTML = `<tr><th>#</th><th>SKU</th><th>Brand</th><th>Product Name</th><th>Price</th><th>Rating</th><th>Reviews</th><th>Link</th></tr>` +
+  tr.map((d,i)=>{
+    const url = 'https://www.screwfix.com' + (DATA.product_urls[d.sku]||'');
+    return `<tr>
     <td>${i+1}</td>
     <td>${d.sku}</td>
     <td class="brand-cell">${d.brand}</td>
@@ -323,7 +340,9 @@ table.innerHTML = `<tr><th>#</th><th>SKU</th><th>Brand</th><th>Product Name</th>
     <td class="price-cell">£${d.price.toFixed(2)}</td>
     <td class="rating-cell">${'★'.repeat(Math.round(d.rating))}</td>
     <td>${d.reviews}</td>
-  </tr>`).join('');
+    <td class="link-cell"><a href="${url}" target="_blank" rel="noopener">🔗 View</a></td>
+  </tr>`;
+  }).join('');
 </script>
 
 <div class="footer">

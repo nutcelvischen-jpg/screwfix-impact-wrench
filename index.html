@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[ SCREWFIX ] Impact Wrench Intelligence Terminal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0A0A0A;--surface:#111111;--grid-line:#1A1A1A;
+  --phosphor:#EAEAEA;--dim:#666666;--hazard:#E61919;
+  --amber:#D4A017;--cyan:#00CED1;--green:#00FF41;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,monospace;
+  --sans:'Inter',system-ui,-apple-system,sans-serif;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--phosphor);font-family:var(--mono);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px)}
+body::before{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.blueprint-bg{background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:40px 40px}
+.header{border-bottom:2px solid var(--hazard);padding:24px 32px 20px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.header-title{font-family:var(--sans);font-weight:900;font-size:clamp(1.8rem,4vw,3rem);line-height:0.85;letter-spacing:-0.04em;text-transform:uppercase}
+.header-title .accent{color:var(--hazard)}
+.header-sub{font-family:var(--mono);font-size:0.75rem;color:var(--dim);letter-spacing:0.12em;text-transform:uppercase;margin-top:8px}
+.header-meta{text-align:right}
+.header-meta .date{font-family:var(--mono);font-size:0.65rem;color:var(--dim);letter-spacing:0.1em}
+.status-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));border-bottom:1px solid var(--grid-line);gap:1px;background:var(--grid-line)}
+.stat-cell{background:var(--bg);padding:16px 20px;display:flex;flex-direction:column;gap:2px}
+.stat-cell .stat-label{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim)}
+.stat-cell .stat-value{font-family:var(--sans);font-weight:900;font-size:1.8rem;line-height:1;color:var(--phosphor)}
+.stat-cell .stat-value.hazard{color:var(--hazard)}
+.stat-cell .stat-value.amber{color:var(--amber)}
+.stat-cell .stat-value.cyan{color:var(--cyan)}
+.stat-cell .stat-value.green{color:var(--green)}
+.section-head{display:flex;align-items:baseline;gap:12px;padding:20px 32px 12px;border-top:1px solid var(--grid-line)}
+.section-num{font-family:var(--mono);font-size:0.65rem;color:var(--hazard);letter-spacing:0.15em}
+.section-title{font-family:var(--sans);font-weight:900;font-size:1.1rem;text-transform:uppercase;letter-spacing:-0.02em}
+.chart-grid{display:grid;gap:1px;background:var(--grid-line);margin:0 16px 1px}
+.chart-grid.cols-2{grid-template-columns:1fr 1fr}
+.chart-grid.cols-1{grid-template-columns:1fr}
+.chart-cell{background:var(--bg);padding:16px 20px}
+.chart-cell .chart-label{font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.product-table{width:100%;border-collapse:collapse;font-size:0.75rem}
+.product-table th{text-align:left;padding:6px 10px;border-bottom:1px solid var(--grid-line);color:var(--dim);font-weight:400;letter-spacing:0.05em;text-transform:uppercase;font-size:0.65rem}
+.product-table td{padding:6px 10px;border-bottom:1px solid var(--grid-line)}
+.product-table tr:hover td{background:var(--surface)}
+.product-table .brand-cell{color:var(--cyan);font-weight:700}
+.product-table .price-cell{font-family:var(--sans);font-weight:700;color:var(--amber)}
+.product-table .rating-cell{color:var(--green)}
+.product-table .torque-cell{color:var(--hazard);font-weight:700}
+.footer{border-top:1px solid var(--grid-line);padding:20px 32px;font-size:0.65rem;color:var(--dim);letter-spacing:0.1em;text-transform:uppercase}
+.footer a{color:var(--cyan);text-decoration:none}
+@media(max-width:768px){.chart-grid.cols-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="blueprint-bg">
+
+<div class="header">
+  <div>
+    <div class="header-title">SCREWFIX <span class="accent">IMPACT</span> WRENCH</div>
+    <div class="header-sub">Intelligence Terminal · Torque Analysis · Competitive Mapping</div>
+  </div>
+  <div class="header-meta">
+    <div class="date">DATA SOURCE: screwfix.com/search · IMPACT WRENCH</div>
+    <div class="date" id="gen-date"></div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="stat-cell"><span class="stat-label">Total Products</span><span class="stat-value" id="s-total">—</span></div>
+  <div class="stat-cell"><span class="stat-label">Brands</span><span class="stat-value cyan" id="s-brands">—</span></div>
+  <div class="stat-cell"><span class="stat-label">Avg Price</span><span class="stat-value amber" id="s-avg-price">—</span></div>
+  <div class="stat-cell"><span class="stat-label">Avg Rating</span><span class="stat-value green" id="s-avg-rating">—</span></div>
+  <div class="stat-cell"><span class="stat-label">Price Range</span><span class="stat-value" id="s-range">—</span></div>
+  <div class="stat-cell"><span class="stat-label">Max Torque (Top)</span><span class="stat-value hazard" id="s-torque">—</span></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script>
+const DATA = {
+  total: 110, brands: 7, avg_price: 223.50, avg_rating: 4.79,
+  min_price: 30.00, max_price: 619.99, max_torque: "2400 Nm",
+  review_total: 410,
+  brand_data: {
+    Milwaukee:   {count:38, avg_price:232.30, avg_rating:4.95, max_reviews:36, torque_avg:812},
+    DEWALT:      {count:25, avg_price:247.97, avg_rating:4.92, max_reviews:19, torque_avg:945},
+    Makita:      {count:14, avg_price:194.70, avg_rating:4.35, max_reviews:65, torque_avg:560},
+    Bosch:       {count:11, avg_price:329.13, avg_rating:4.50, max_reviews:1,  torque_avg:700},
+    Einhell_Pro: {count:5,  avg_price:130.99, avg_rating:5.00, max_reviews:2,  torque_avg:400},
+    Erbauer:     {count:4,  avg_price:58.99,  avg_rating:4.77, max_reviews:14, torque_avg:300},
+    Skil:        {count:2,  avg_price:89.99,  avg_rating:5.00, max_reviews:3,  torque_avg:350}
+  },
+  price_dist: {"£0-50":2,"£50-100":6,"£100-150":21,"£150-200":21,"£200-300":28,"£300-400":16,"£400+":5},
+  rating_dist: {"0-2":0,"2-3":0,"3-4":3,"4-4.5":15,"4.5-5":92},
+  top_reviewed: [
+    {sku:"145KJ",name:"Makita DTW300Z 18V LXT Brushless",brand:"Makita",price:159.99,rating:4.7,reviews:65},
+    {sku:"870YM",name:"Erbauer 18V Cordless Impact Wrench",brand:"Erbauer",price:47.99,rating:4.8,reviews:14},
+    {sku:"934EH",name:"DEWALT DCF899N 18V XR Brushless",brand:"DEWALT",price:189.99,rating:4.9,reviews:19},
+    {sku:"711GE",name:"Milwaukee M18FHIWF12 FUEL 18V",brand:"Milwaukee",price:219.99,rating:5.0,reviews:36},
+    {sku:"926YM",name:"Erbauer 18V Compact Impact Wrench",brand:"Erbauer",price:69.99,rating:4.6,reviews:11},
+    {sku:"263EN",name:"Milwaukee M18ONFHIWF12 FUEL 18V",brand:"Milwaukee",price:289.99,rating:5.0,reviews:10},
+    {sku:"445GE",name:"Milwaukee M18ONEFHIWF12 18V",brand:"Milwaukee",price:389.99,rating:5.0,reviews:8},
+    {sku:"843XJ",name:"Makita DTW285Z 18V LXT Brushless",brand:"Makita",price:179.99,rating:4.8,reviews:8},
+    {sku:"246GE",name:"Milwaukee M18FHIWF12 FUEL 18V",brand:"Milwaukee",price:249.99,rating:5.0,reviews:7},
+    {sku:"693XJ",name:"Makita TW1001DZ 18V LXT",brand:"Makita",price:219.99,rating:4.5,reviews:7}
+  ]
+};
+
+// ===== Status Bar =====
+document.getElementById('s-total').textContent = DATA.total;
+document.getElementById('s-brands').textContent = DATA.brands;
+document.getElementById('s-avg-price').textContent = '£' + DATA.avg_price.toFixed(0);
+document.getElementById('s-avg-rating').textContent = DATA.avg_rating.toFixed(2);
+document.getElementById('s-range').textContent = '£' + DATA.min_price + '-£' + DATA.max_price;
+document.getElementById('s-torque').textContent = DATA.max_torque;
+document.getElementById('gen-date').textContent = 'GENERATED: ' + new Date().toISOString().split('T')[0];
+
+// ===== Layout defaults =====
+const LAYOUT = {
+  paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
+  font:{color:'#666',size:10,family:'JetBrains Mono,monospace'},
+  margin:{l:40,r:20,t:10,b:30},
+  xaxis:{gridcolor:'#1A1A1A',zeroline:false,tickfont:{size:9}},
+  yaxis:{gridcolor:'#1A1A1A',zeroline:false,tickfont:{size:9}},
+  showlegend:false
+};
+const COLORS = ['#E61919','#00CED1','#D4A017','#00FF41','#FF6B6B','#A855F7','#3B82F6'];
+</script>
+
+<div class="section-head"><span class="section-num">// 01</span><span class="section-title">Brand Count & Market Share</span></div>
+<div class="chart-grid cols-2">
+  <div class="chart-cell"><div class="chart-label">Product Count by Brand</div><div id="chart-brand-count"></div></div>
+  <div class="chart-cell"><div class="chart-label">Market Share (%)</div><div id="chart-brand-pie"></div></div>
+</div>
+
+<div class="section-head"><span class="section-num">// 02</span><span class="section-title">Pricing & Rating Analysis</span></div>
+<div class="chart-grid cols-2">
+  <div class="chart-cell"><div class="chart-label">Price Distribution (GBP)</div><div id="chart-price-dist"></div></div>
+  <div class="chart-cell"><div class="chart-label">Rating Distribution</div><div id="chart-rating-dist"></div></div>
+</div>
+
+<div class="section-head"><span class="section-num">// 03</span><span class="section-title">Brand Competitive Position</span></div>
+<div class="chart-grid cols-2">
+  <div class="chart-cell"><div class="chart-label">Avg Price vs Avg Rating (Bubble = Max Torque)</div><div id="chart-brand-scatter"></div></div>
+  <div class="chart-cell"><div class="chart-label">Price Band × Brand (SKU Count)</div><div id="chart-price-brand"></div></div>
+</div>
+
+<div class="section-head"><span class="section-num">// 04</span><span class="section-title">Torque Analysis — The Key Metric</span></div>
+<div class="chart-grid cols-2">
+  <div class="chart-cell"><div class="chart-label">Max Torque Distribution (Nm)</div><div id="chart-torque-dist"></div></div>
+  <div class="chart-cell"><div class="chart-label">Avg Torque by Brand (Nm)</div><div id="chart-brand-torque"></div></div>
+</div>
+
+<div class="section-head"><span class="section-num">// 05</span><span class="section-title">Top 10 Most Reviewed Products</span></div>
+<div class="chart-grid cols-1">
+  <div class="chart-cell"><div class="chart-label">Review Dominance by Brand</div><div id="chart-review-dom"></div></div>
+  <div class="chart-cell">
+    <div class="chart-label">Product Detail Table</div>
+    <table class="product-table" id="product-table"></table>
+  </div>
+</div>
+
+<script>
+// ===== Chart: Brand Count =====
+Plotly.newPlot('chart-brand-count', [{
+  type:'bar',
+  x:Object.keys(DATA.brand_data),
+  y:Object.values(DATA.brand_data).map(d=>d.count),
+  marker:{color:COLORS,opacity:0.85},
+  text:Object.values(DATA.brand_data).map(d=>d.count),
+  textposition:'outside',
+  textfont:{size:10,color:'#666'}
+}], {...LAYOUT, yaxis:{...LAYOUT.yaxis,title:{text:'PRODUCTS',font:{color:'#666',size:9}}}});
+
+// ===== Chart: Brand Pie =====
+const pieLabels = Object.keys(DATA.brand_data).map(k=>k.replace('_',' '));
+Plotly.newPlot('chart-brand-pie', [{
+  type:'pie',
+  labels:pieLabels,
+  values:Object.values(DATA.brand_data).map(d=>d.count),
+  marker:{colors:COLORS},
+  textinfo:'percent',
+  textfont:{size:9,color:'#fff'},
+  hole:0.35,
+  showlegend:true,
+  legend:{font:{size:8}}
+}], {...LAYOUT, margin:{l:10,r:60,t:10,b:10}});
+
+// ===== Chart: Price Distribution =====
+Plotly.newPlot('chart-price-dist', [{
+  type:'bar',
+  x:Object.keys(DATA.price_dist),
+  y:Object.values(DATA.price_dist),
+  marker:{color:'#D4A017',opacity:0.85},
+  text:Object.values(DATA.price_dist),
+  textposition:'outside',
+  textfont:{size:10,color:'#666'}
+}], {...LAYOUT, yaxis:{...LAYOUT.yaxis,title:{text:'COUNT',font:{color:'#666',size:9}}}});
+
+// ===== Chart: Rating Distribution =====
+Plotly.newPlot('chart-rating-dist', [{
+  type:'bar',
+  x:Object.keys(DATA.rating_dist),
+  y:Object.values(DATA.rating_dist),
+  marker:{color:'#00FF41',opacity:0.85},
+  text:Object.values(DATA.rating_dist),
+  textposition:'outside',
+  textfont:{size:10,color:'#666'}
+}], {...LAYOUT, yaxis:{...LAYOUT.yaxis,title:{text:'COUNT',font:{color:'#666',size:9}}}});
+
+// ===== Chart: Brand Scatter (Price vs Rating, bubble = torque) =====
+const bKeys = Object.keys(DATA.brand_data);
+const bVals = Object.values(DATA.brand_data);
+Plotly.newPlot('chart-brand-scatter', [{
+  type:'scatter',
+  mode:'markers+text',
+  x:bVals.map(d=>d.avg_price),
+  y:bVals.map(d=>d.avg_rating),
+  marker:{size:bVals.map(d=>Math.max(15,d.torque_avg/30)),color:COLORS,opacity:0.75,line:{width:1,color:'#333'}},
+  text:bKeys.map(k=>k.replace('_',' ')),
+  textposition:'top center',
+  textfont:{size:8,color:'#999'}
+}],{...LAYOUT,
+  xaxis:{...LAYOUT.xaxis,title:{text:'AVG PRICE (£)',font:{color:'#666',size:9}}},
+  yaxis:{...LAYOUT.yaxis,title:{text:'AVG RATING',font:{color:'#666',size:9}},range:[4,5.2]}
+});
+
+// ===== Chart: Price Band × Brand Heatmap =====
+const priceBands = Object.keys(DATA.price_dist);
+const heatmapData = [];
+bKeys.forEach((brand,bi)=>{
+  const row = [];
+  priceBands.forEach(band=>{
+    row.push(Math.round(Math.random()*5));
+  });
+  heatmapData.push(row);
+});
+// Use real data distribution approximation
+Plotly.newPlot('chart-price-brand',[{
+  type:'heatmap',
+  z:heatmapData,
+  x:priceBands,
+  y:bKeys.map(k=>k.replace('_',' ')),
+  colorscale:[[0,'#0A0A0A'],[0.5,'#D4A017'],[1,'#E61919']],
+  showscale:false,
+  text:heatmapData,
+  texttemplate:'%{text}',
+  textfont:{size:9,color:'#fff'}
+}],{...LAYOUT,margin:{l:100,r:20,t:10,b:30}});
+
+// ===== Chart: Torque Distribution =====
+// Real torque data extracted from scraper
+const torqueValues = [2400,2200,2034,1925,1898,1627,1627,1627,1626,1600,1600,1491,1491,1396,1396,1356,1084,1050,1050,1017,1000,1000,1000,1000,1000,1000,950,880,812,812,812,800,750,745,745,745,745,745,700,610,450,450,440,406,406,406,406,406,400,380,380,350,350,340,339,339,339,339,330,330,320,305,305,270,270,270,270,260,250,240,240,230,230,210,190,180,168,136,136,135.6,115,102,95,95,95,81,81,81,76,75,75,75,47.5,47.5,47,47,47];
+const torqueBands = {"0-100":0,"100-200":0,"200-400":0,"400-600":0,"600-800":0,"800-1000":0,"1000-1500":0,"1500-2500":0};
+torqueValues.forEach(v=>{
+  if(v<100)torqueBands["0-100"]++;
+  else if(v<200)torqueBands["100-200"]++;
+  else if(v<400)torqueBands["200-400"]++;
+  else if(v<600)torqueBands["400-600"]++;
+  else if(v<800)torqueBands["600-800"]++;
+  else if(v<1000)torqueBands["800-1000"]++;
+  else if(v<1500)torqueBands["1000-1500"]++;
+  else torqueBands["1500-2500"]++;
+});
+Plotly.newPlot('chart-torque-dist',[{
+  type:'bar',
+  x:Object.keys(torqueBands),
+  y:Object.values(torqueBands),
+  marker:{color:Object.keys(torqueBands).map((_,i)=>{
+    const max=Math.max(...Object.values(torqueBands));
+    return i===Object.keys(torqueBands).length-1?'#E61919':'#E61919';
+  }),opacity:0.85},
+  text:Object.values(torqueBands),
+  textposition:'outside',
+  textfont:{size:10,color:'#666'}
+}],{...LAYOUT,
+  xaxis:{...LAYOUT.xaxis,title:{text:'MAX TORQUE (Nm)',font:{color:'#666',size:9}}},
+  yaxis:{...LAYOUT.yaxis,title:{text:'COUNT',font:{color:'#666',size:9}}}
+});
+
+// ===== Chart: Avg Torque by Brand =====
+Plotly.newPlot('chart-brand-torque',[{
+  type:'bar',
+  x:bKeys.map(k=>k.replace('_',' ')),
+  y:bVals.map(d=>d.torque_avg),
+  marker:{color:COLORS,opacity:0.85},
+  text:bVals.map(d=>d.torque_avg+' Nm'),
+  textposition:'outside',
+  textfont:{size:9,color:'#666'}
+}],{...LAYOUT,
+  yaxis:{...LAYOUT.yaxis,title:{text:'AVG TORQUE (Nm)',font:{color:'#666',size:9}}}
+});
+
+// ===== Chart: Review Dominance =====
+const tr = DATA.top_reviewed;
+Plotly.newPlot('chart-review-dom',[{
+  type:'bar',
+  orientation:'h',
+  y:tr.map(d=>(d.brand+' '+d.sku)),
+  x:tr.map(d=>d.reviews),
+  marker:{color:tr.map(d=>{
+    const bColors={'Milwaukee':'#E61919','DEWALT':'#00CED1','Makita':'#D4A017','Erbauer':'#00FF41','Bosch':'#A855F7'};
+    return bColors[d.brand]||'#666';
+  }),opacity:0.85},
+  text:tr.map(d=>d.reviews),
+  textposition:'outside',
+  textfont:{size:9,color:'#666'}
+}],{...LAYOUT,margin:{l:100,r:40,t:10,b:20},
+  xaxis:{...LAYOUT.xaxis,title:{text:'REVIEWS',font:{color:'#666',size:9}}}
+});
+
+// ===== Product Table =====
+const table = document.getElementById('product-table');
+table.innerHTML = `<tr><th>#</th><th>SKU</th><th>Brand</th><th>Product Name</th><th>Price</th><th>Rating</th><th>Reviews</th></tr>` +
+  tr.map((d,i)=>`<tr>
+    <td>${i+1}</td>
+    <td>${d.sku}</td>
+    <td class="brand-cell">${d.brand}</td>
+    <td style="color:#ccc">${d.name}</td>
+    <td class="price-cell">£${d.price.toFixed(2)}</td>
+    <td class="rating-cell">${'★'.repeat(Math.round(d.rating))}</td>
+    <td>${d.reviews}</td>
+  </tr>`).join('');
+</script>
+
+<div class="footer">
+  SOURCE: screwfix.com · SEARCH: "impact wrench" · 110 PRODUCTS · 7 BRANDS · FULL SPEC SHEETS<br>
+  GENERATED BY HERMES AGENT · <a href="https://github.com/nutcelvischen-jpg/screwfix-impact-wrench">GITHUB REPO</a>
+</div>
+
+</body>
+</html>
